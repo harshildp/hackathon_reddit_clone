@@ -25,7 +25,9 @@ DROP TABLE IF EXISTS `comment_votes`;
 CREATE TABLE `comment_votes` (
   `user_id` int(11) NOT NULL,
   `comment_id` int(11) NOT NULL,
-  `type` tinyint(4) DEFAULT NULL,
+  `type` smallint(6) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`,`comment_id`),
   KEY `fk_users_has_comments_comments1_idx` (`comment_id`),
   KEY `fk_users_has_comments_users1_idx` (`user_id`),
@@ -52,7 +54,7 @@ DROP TABLE IF EXISTS `comments`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `comments` (
   `id` int(11) NOT NULL,
-  `text` varchar(45) DEFAULT NULL,
+  `text` text,
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
   `post_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -115,7 +117,9 @@ DROP TABLE IF EXISTS `post_votes`;
 CREATE TABLE `post_votes` (
   `post_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `type` tinyint(4) DEFAULT NULL,
+  `type` smallint(6) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`post_id`,`user_id`),
   KEY `fk_posts_has_users_users1_idx` (`user_id`),
   KEY `fk_posts_has_users_posts1_idx` (`post_id`),
@@ -177,7 +181,7 @@ CREATE TABLE `subreddits` (
   `url` varchar(45) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `description` varchar(45) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -202,6 +206,8 @@ CREATE TABLE `subscriptions` (
   `user_id` int(11) NOT NULL,
   `subreddit_id` int(11) NOT NULL,
   `moderator` tinyint(4) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`,`subreddit_id`),
   KEY `fk_users_has_subreddits_subreddits1_idx` (`subreddit_id`),
   KEY `fk_users_has_subreddits_users_idx` (`user_id`),
@@ -229,9 +235,13 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(45) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `salt` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -240,6 +250,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'harshilp','harshilp@uw.edu','5d41c3bc194b47eeee6c33b99bfc04','c10f62ccab92af5d45e9496dcdf26e51','2017-10-13 19:12:46','2017-10-13 19:12:46');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -252,4 +263,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-10-13 18:18:16
+-- Dump completed on 2017-10-13 19:25:03
