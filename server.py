@@ -49,7 +49,6 @@ def validation():
 
     return error != True
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -99,63 +98,59 @@ def login():
 
 @app.route('/home')
 def home():
-    return render_template('home.html')
-
-''' @app.route('/wall')
-def wall():
-    query = 'SELECT message, CONCAT(first_name, " ", last_name) as name, date_format(messages.created_at, \"%M %D, %Y %r") as time, messages.id FROM users JOIN messages ON messages.user_id = users.id ORDER BY created_at DESC'
+    query = "SELECT messages.text, users.username as name, date_format(messages.created_at, '%M %D, %Y %r') as time, " +\
+            "messages.id FROM users JOIN messages ON messages.author_id = users.id ORDER BY messages.created_at DESC"
     messages = mysql.query_db(query)
+    return render_template('home.html', messages=messages)
 
-    query = 'SELECT comment, CONCAT(first_name, " ", last_name) as name, date_format(comments.created_at, \"%M %D, %Y %r") as time, messages.id, comments.message_id, comments.id FROM users JOIN comments ON users.id = comments.user_id JOIN messages on messages.id = comments.message_id ORDER BY comments.created_at'
-    comments = mysql.query_db(query)
+@app.route('/subscriptions')
+def subscriptions():
+    if 'id' not in session:
+        return redirect('/')
+    query = "SELECT subreddits.url, subreddits.description, DATE_FORMAT(subscriptions.updated_at, '%m/%d/%Y') as since, subscriptions.moderator FROM subscriptions " +\
+            "JOIN subreddits on subreddits.id = subscriptions.subreddit_id " +\
+            "WHERE subscriptions.user_id = :id"
+    data = {'id': session['id']}
+    subscriptions = mysql.query_db(query, data)
+    print subscriptions
+    return render_template('subscriptions.html', subscriptions=subscriptions)
 
-    return render_template('wall.html', messages=messages, comments=comments) '''
+@app.route('/subreddits/create')
+def new_subreddit_page():
+    if 'id' not in session:
+        return redirect('/')
+    return render_template('createsubreddit.html')
 
-
-''' @app.route('/post', methods=['POST'])
-def post():
-    message = request.form['message']
-    query = 'INSERT INTO messages(message, user_id, created_at, updated_at) VALUES(:message, :user_id, NOW(), NOW())'
+@app.route('/subreddits/generate', methods=['POST'])
+def create_subreddit():
+    if 'id' not in session:
+        return redirect('/')
+    ret = redirect('/subreddits/create')
+    valid = True
     data = {
-        'message': message,
-        'user_id': session['id']
+        'url': 'r/'+request.form['name'],
+        'desc': request.form['description']
     }
-    mysql.query_db(query, data)
-    return redirect('/wall')
-
-
-@app.route('/comment/<message_id>', methods=['POST'])
-def comment(message_id):
-    comment = request.form['comment']
-    query = 'INSERT INTO comments(comment, user_id, message_id, created_at, updated_at) VALUES(:comment, :user_id, :message_id, NOW(), NOW())'
-    data = {
-        'comment': comment,
-        'user_id': session['id'],
-        'message_id': message_id
-    }
-    mysql.query_db(query, data)
-    return redirect('/wall')
-
-
-@app.route('/delete/<comment_id>', methods=['POST'])
-def delete(comment_id):
-    query = 'SELECT created_at FROM comments where comments.id = :comment_id'
-    data = {
-        'comment_id': comment_id
-    }
-    date = mysql.query_db(query, data)
-    created = date[0]['created_at']
-    timesince = datetime.datetime.now() - created
-    minutessince = int(timesince.total_seconds() / 60)
-    if minutessince < 30:
-        query = 'DELETE FROM comments where comments.id = :comment_id'
+    if len(data['url']) > 45:
+        flash('Your subreddit name must be 43 characters or less.', 'Error:CreateSubError')
+        valid = False
+    if len(data['desc']) > 255:
+        flash('Your subreddit description must be 255 characters or less.', 'Error:CreateSubError')
+        valid = False
+    if valid:
+        query = "INSERT INTO subreddits (url, created_at, updated_at, description) " +\
+                "VALUES (:url, NOW(), NOW(), :desc);"
+        sub_id = mysql.query_db(query, data)
+        query = "INSERT INTO subscriptions (user_id, subreddit_id, moderator, created_at, updated_at) " +\
+                "VALUES (:user_id, :sub_id, 1, NOW(), NOW());"
+        data = {
+            'user_id': session['id'],
+            'sub_id': sub_id
+        }
         mysql.query_db(query, data)
-        return redirect('/wall')
-    else:
-        flash('Cannot delete comment if more than 30 minutes since posting',
-              'Error:CommentDelete')
-        return redirect('/wall') '''
-
+        flash("You successfully created a new community!", "Success:CreateSub")
+        ret = redirect('/subscriptions')
+    return ret
 
 @app.route('/logout')
 def logout():

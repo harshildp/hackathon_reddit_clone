@@ -16,16 +16,39 @@
     <body class = 'container'> 
         <nav class="navbar fixed-top navbar-dark bg-dark">
             <div class='container'>
-                <a class="navbar-brand" href="/">Reddit</a>
+                <a class="navbar-brand" href="/home">Reddit</a>
                 <span class="navbar-text">
-                        Gaze beyond, <a href="#" class="navbar-link">{{session['username']}}</a>
+                    Welcome to Reddit,
+                    <a href="#" class="navbar-link">{{session['username']}}</a>
                 </span>
-                <span class="navbar-text">
-                        <a href="/logout" class="navbar-link">Log Off</a>
-                </span>
+                <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1"
+                    aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon">
+                    </span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+                <!-- Links -->
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/home">Home
+                            <span class="sr-only">(current)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/subscriptions">Manage Subscriptions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logoff">Log Off</a>
+                    </li>
+                </ul>
+                <!-- Links -->
             </div>
         </nav>
-<!--        <div class='row justify-content-center'>  
+        <div class='row justify-content-center'>  
             <form action='/post' method='POST' class='col-8'>
                 <div class='form-group'>
                     <h3>Post a Message:</h3>
