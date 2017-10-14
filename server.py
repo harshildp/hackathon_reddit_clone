@@ -8,7 +8,16 @@ app = Flask(__name__)
 mysql = MySQLConnector(app, 'reddit')
 app.secret_key = 'kittens'
 
-
+def check_member(sub):
+    info = None
+    for char in sub[0]['list_subs']:
+        if char == str(session['id']):
+            query = "SELECT DATE_FORMAT(subscriptions.created_at, '%m/%d/%Y') as since FROM subscriptions " +\
+                    "JOIN users ON subscriptions.user_id = users.id " +\
+                    "WHERE users.id = :id;"
+            data = {'id': session['id']}
+            info = mysql.query_db(query, data)
+            return info
 def validation():
     error = False
     if len(request.form['email']) < 1:
@@ -112,8 +121,13 @@ def subscriptions():
             "WHERE subscriptions.user_id = :id"
     data = {'id': session['id']}
     subscriptions = mysql.query_db(query, data)
-    print subscriptions
-    return render_template('subscriptions.html', subscriptions=subscriptions)
+    query = "SELECT COUNT(subscriptions.user_id) as num_subs, subreddits.url, subreddits.description FROM subscriptions " +\
+            "JOIN subreddits ON subreddits.id = subscriptions.subreddit_id " +\
+            "GROUP BY subscriptions.subreddit_id " +\
+            "HAVING LOCATE(:id, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ')) = 0 " +\
+            "ORDER BY num_subs DESC;"
+    other_sub_reddits = mysql.query_db(query, data)
+    return render_template('subscriptions.html', subscriptions=subscriptions, other_sub_reddits=other_sub_reddits)
 
 @app.route('/subreddits/create')
 def new_subreddit_page():
@@ -152,7 +166,74 @@ def create_subreddit():
         ret = redirect('/subscriptions')
     return ret
 
-@app.route('/logout')
+@app.route('/r/<suburl>')
+def subreddit(suburl):
+    member = False
+    ret = redirect('/home')
+    data = {'url': 'r/'+suburl}
+    query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
+            "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
+            "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
+    sub = mysql.query_db(query, data)
+    if len(sub) > 0:
+        query = "SELECT posts.id AS id, posts.title AS title, posts.created_at AS posted, users.username AS user FROM posts " +\
+            "JOIN users ON posts.user_id = users.id " +\
+            "JOIN subreddits ON posts.subreddit_id = subreddits.id " +\
+            "WHERE subreddits.url = :url;"
+        posts = mysql.query_db(query, data)
+        info = check_member(sub)
+        ret = render_template('subreddit.html', sub=sub[0], member=member, posts=posts)
+        if info:
+            member = True
+            ret = render_template('subreddit.html', sub=sub[0], member=member, info=info[0], posts=posts)
+    return ret
+
+@app.route('/r/<suburl>/<postid>')
+def post(suburl, postid):
+    query = "SELECT posts.title AS title, posts.text AS text, users.username AS op, " +\
+            "DATE_FORMAT(posts.created_at, '%h:%i %p - %m/%d/%Y') AS posted, " +\
+            "DATE_FORMAT(posts.updated_at, '%h:%i %p - %m/%d/%Y') AS edited FROM posts " +\
+            "JOIN users ON posts.user_id = users.id " +\
+            "WHERE posts.id = :id"
+    data = {'id': postid}
+    post = mysql.query_db(query, data)
+    if len(post) > 0:
+        data = {'url': 'r/'+suburl}
+        query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
+            "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
+            "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
+        sub = mysql.query_db(query, data)
+        info = check_member(sub)
+        member = False
+        ret = render_template('post.html', post=post[0], sub=sub[0], member=member)
+        if info:
+            member = True
+            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, info=info[0])
+        return ret
+    else:
+        url = '/r/' + suburl
+        return redirect(url)
+
+@app.route('/r/<suburl>/subscribe')
+def subscribe(suburl):
+    if 'id' not in session:
+        return redirect('/')
+    query = "SELECT id FROM subreddits WHERE subreddits.url = :url"
+    data = {'url': 'r/'+suburl}
+    sub_id = mysql.query_db(query, data)
+    if len(sub_id) > 0:
+        query = "INSERT INTO subscriptions (user_id, subreddit_id, moderator, created_at, updated_at) " +\
+                "VALUES (:user, :subreddit, 0, NOW(), NOW());"
+        data = {
+            'user': session['id'],
+            'subreddit': sub_id[0]['id']
+        }
+        mysql.query_db(query, data)
+        flash("You successfully subscribed!", "Success:Subscription")
+        url = '/r/' + suburl
+    return redirect(url)
+
+@app.route('/logoff')
 def logout():
     session.clear()
     return redirect('/')

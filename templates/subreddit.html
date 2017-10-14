@@ -56,43 +56,34 @@
             <!-- Links -->
         </div>
     </nav>
-    <h1>{{session['username']}}'s Subscriptions</h1>
     <div class='row justify-content-center'>
-        <div class='col-md-6'>
-            <h3>Current Subcriptions</h3>
+        <div class='col-md-10'>
+            <h3>Top Posts</h3>
             <div class="list-group">
-                {% if subscriptions %} {% for sub in subscriptions %}
-                <a href="/{{ sub['url'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
+                {% if posts %} {% for post in posts %}
+                <a href="/{{ sub['url'] }}/{{ post['id'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
                     <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ sub['url'] }}</h5>
-                        {% if sub['moderator'] == 1 %}
-                        <small class="text-muted"><b>Moderator</b> since {{ sub['since'] }}</small>
-                        {% else %}
-                        <small class="text-muted"><b>Member</b> since {{ sub['since'] }}</small>
-                        {% endif %}
+                        <h5 class="mb-1">{{ post['title'] }}</h5>
                     </div>
-                    <small class="text-muted">{{ sub['description'] }}</small>
+                    <small class="text-muted">Submitted {{ post['posted'] }} by {{ post['user'] }}</small>
                 </a>
                 {% endfor %} {% endif %}
             </div>
         </div>
 
-        <div class='col-md-6'>
-            <h3>Other Subreddits</h3>
-            <div class="list-group">
-                {% if other_sub_reddits %} {% for sub in other_sub_reddits %}
-                <a href="/{{ sub['url'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ sub['url'] }}</h5>
-                        <small class="text-muted">{{ sub['num_subs'] }} Members</small>
-                    </div>
-                    <small class="text-muted">{{ sub['description'] }}</small>
-                </a>
-                {% endfor %} {% endif %}
-            </div>
-            <h4>Don't see one for you?
-                <a href="/subreddits/create">Click here to create a new subreddit</a>
-            </h4>
+        <div class='col-md-2'>
+            <h3>{{ sub['url'] }}</h3>
+            <h4>{{ sub['num_subs'] }} Subscribers</h4>
+            <h4>Community since {{ sub['created'] }}</h4>
+            <p>{{ sub['description'] }}</p>
+            {% if not member %}
+            <a href="/{{ sub['url'] }}/subscribe"><button type="button" class="btn btn-success">Subscribe</button></a>
+            {% else %}
+            <h4>Member since {{ info['since'] }}</h4>
+            {% endif %}
+            {% with errors = get_flashed_messages(category_filter=["Success:Subscription"]) %}
+            {% include "error.html" %}
+            {% endwith %}
         </div>
     </div>
 </body>
