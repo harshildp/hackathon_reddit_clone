@@ -323,6 +323,26 @@ def vote(suburl, postid, updown):
     url = '/r/' + suburl + '/' + postid
     return redirect(url)
 
+@app.route('/r/<suburl>/<postid>/addcomment', methods=['post'])
+def add_comment(suburl, postid):
+    if 'id' not in session:
+        return redirect('/')
+    data = {
+        'content': request.form['text'],
+        'postid': postid,
+        'userid': session['id']
+    }
+    # verify comment is not empty
+    if len(data['content']) < 1:
+        flash("Comment may not be empty.", "Error:Comment")
+    else:
+        query = "INSERT INTO comments (text, user_id, post_id, created_at, updated_at) " +\
+                "VALUES (:content, :userid, :postid, NOW(), NOW());"
+        mysql.query_db(query, data)
+    # go back to main page for that subreddit
+    url = '/r/' + suburl + '/' + postid
+    return redirect(url)
+
 @app.route('/logoff')
 def logout():
     session.clear()
