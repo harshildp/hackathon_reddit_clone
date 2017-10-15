@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M"
+        crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='CSS/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='JS/function.js') }}"></script>
+    <title>Reddit Clone</title>
+</head>
+
+<body class='container'>
+
+
+    <nav class="navbar fixed-top navbar-dark bg-dark">
+        <div class='container'>
+            <a class="navbar-brand" href="/home">Reddit</a>
+            <span class="navbar-text">
+                Welcome to Reddit,
+                <a href="#" class="navbar-link">{{session['username']}}</a>
+            </span>
+            <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1"
+                aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon">
+                </span>
+            </button>
+        </div>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+            <!-- Links -->
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/home">Home
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/subscriptions">Manage Subscriptions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logoff">Log Off</a>
+                </li>
+            </ul>
+            <!-- Links -->
+        </div>
+    </nav>
+    <div class='row justify-content-center'>
+        <div class='col-md-10'>
+            <h3>{{ post['title'] }}</h3>
+            <h4>Submitted by {{ post['op'] }} at {{ post['posted'] }}</h4>
+            <p>{{ post['text'] }}</p>
+        </div>
+
+        <div class='col-md-2'>
+            <h3>{{ sub['url'] }}</h3>
+            <h4>{{ sub['num_subs'] }} Subscribers</h4>
+            <h4>Community since {{ sub['created'] }}</h4>
+            <p>{{ sub['description'] }}</p>
+            {% if not member %}
+            <a href="/{{ sub['url'] }}/subscribe"><button type="button" class="btn btn-success">Subscribe</button></a>
+            {% else %}
+            <h4>Member since {{ info['since'] }}</h4>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
