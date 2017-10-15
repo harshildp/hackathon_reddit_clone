@@ -60,6 +60,8 @@ def validation():
 
 @app.route('/')
 def index():
+    if 'id' in session:
+        return redirect('/home')
     return render_template('index.html')
 
 
@@ -214,6 +216,33 @@ def post(suburl, postid):
         url = '/r/' + suburl
         return redirect(url)
 
+@app.route('/r/<suburl>/addpost', methods=['POST'])
+def add_post(suburl):
+    if 'id' not in session:
+        return redirect('/')
+    data = {
+        'title': request.form['title'],
+        'content': request.form['text'],
+        'suburl': 'r/'+suburl,
+        'userid': session['id']
+    }
+    valid = True
+    if len(data['title']) < 1 or len(data['content']) < 1:
+        flash("Post title and content may not be empty.", "Error:Post")
+        valid = False
+    if valid:
+        # go get subid based on suburl
+        query = "SELECT id FROM subreddits WHERE url = :suburl"
+        sub_id = mysql.query_db(query, data)
+        data['sub_id'] = sub_id[0]['id']
+        # add that to data as sub_id, then insert post with that sub_id
+        query = "INSERT INTO posts (text, user_id, subreddit_id, title, created_at, updated_at) " +\
+                "VALUES (:content, :userid, :sub_id, :title, NOW(), NOW());"
+        mysql.query_db(query, data)
+    # go back to main page for that subreddit
+    url = '/r/' + suburl
+    return redirect(url)
+
 @app.route('/r/<suburl>/subscribe')
 def subscribe(suburl):
     if 'id' not in session:
@@ -230,6 +259,24 @@ def subscribe(suburl):
         }
         mysql.query_db(query, data)
         flash("You successfully subscribed!", "Success:Subscription")
+        url = '/r/' + suburl
+    return redirect(url)
+
+@app.route('/r/<suburl>/unsubscribe')
+def unsubscribe(suburl):
+    if 'id' not in session:
+        return redirect('/')
+    query = "SELECT id FROM subreddits WHERE subreddits.url = :url"
+    data = {'url': 'r/'+suburl}
+    sub_id = mysql.query_db(query, data)
+    if len(sub_id) > 0:
+        query = "DELETE FROM subscriptions WHERE user_id = :user and subreddit_id = :subreddit"
+        data = {
+            'user': session['id'],
+            'subreddit': sub_id[0]['id']
+        }
+        mysql.query_db(query, data)
+        flash("You successfully unsubscribed!", "Success:Subscription")
         url = '/r/' + suburl
     return redirect(url)
 

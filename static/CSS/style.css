@@ -23,3 +23,12 @@ body {
 .error{
     color:red;
 }
+form#post{
+    padding: 10px;
+}
+    form#post label{
+        color: black;
+    }
+div#collapseExample{
+    margin-bottom: 15px;
+}
