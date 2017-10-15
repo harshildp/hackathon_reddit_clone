@@ -59,6 +59,28 @@
     <div class='row justify-content-center'>
         <div class='col-md-10'>
             <h3>Top Posts</h3>
+            <p>
+                <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                    Add new post
+                </a>
+            </p>
+            <div class="collapse" id="collapseExample">
+                <div class="card card-block">
+                    <form action="/{{ sub['url'] }}/addpost" method='POST' id="post">
+                        <div class='form-group'>
+                            {% with errors = get_flashed_messages(category_filter=["Error:Post"]) %} {% include "error.html" %} {% endwith %}
+                            <label for="title">Post Title:</label>
+                            <input type="text" name="title" class="form-control">
+                        </div>
+                        <div class='form-group'>
+                            {% with errors = get_flashed_messages(category_filter=["Error:Post"]) %} {% include "error.html" %} {% endwith %}
+                            <label for="text">Post Content:</label>
+                            <textarea name="text" class="form-control"></textarea>
+                        </div>
+                        <Button type="submit" class="btn btn-primary">Submit Post</Button>
+                    </form>
+                </div>
+            </div>
             <div class="list-group">
                 {% if posts %} {% for post in posts %}
                 <a href="/{{ sub['url'] }}/{{ post['id'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
@@ -77,12 +99,15 @@
             <h4>Community since {{ sub['created'] }}</h4>
             <p>{{ sub['description'] }}</p>
             {% if not member %}
-            <a href="/{{ sub['url'] }}/subscribe"><button type="button" class="btn btn-success">Subscribe</button></a>
+            <a href="/{{ sub['url'] }}/subscribe">
+                <button type="button" class="btn btn-success">Subscribe</button>
+            </a>
             {% else %}
             <h4>Member since {{ info['since'] }}</h4>
-            {% endif %}
-            {% with errors = get_flashed_messages(category_filter=["Success:Subscription"]) %}
-            {% include "error.html" %}
+            <a href="/{{ sub['url'] }}/unsubscribe">
+                <button type="button" class="btn btn-danger">Unsubscribe</button>
+            </a>
+            {% endif %} {% with errors = get_flashed_messages(category_filter=["Success:Subscription"]) %} {% include "error.html" %}
             {% endwith %}
         </div>
     </div>
