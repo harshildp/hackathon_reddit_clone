@@ -20,7 +20,7 @@
 </head>
 
 <body class='container'>
-    {% include "navbar.html" %}        
+    {% include "navbar.html" %}
     <div class='row justify-content-center'>
         <div class='col-md-10'>
             <h3>Top Posts</h3>
@@ -65,7 +65,7 @@
 
         <div class='col-md-2'>
             <h3>{{ sub['url'] }}</h3>
-            <h4>{{ sub['num_subs'] }} Subscribers</h4>
+            <h4>{{ sub['num_subs'] }} Subscriber(s)</h4>
             <h4>Community since {{ sub['created'] }}</h4>
             <p>{{ sub['description'] }}</p>
             {% if not member %}
