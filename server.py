@@ -168,7 +168,7 @@ def create_subreddit():
         ret = redirect('/subscriptions')
     return ret
 
-@app.route('/r/<suburl>')
+@app.route('/r/<suburl>/')
 def subreddit(suburl):
     member = False
     ret = redirect('/home')
@@ -178,11 +178,15 @@ def subreddit(suburl):
             "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
     sub = mysql.query_db(query, data)
     if len(sub) > 0:
-        query = "SELECT posts.id AS id, posts.title AS title, posts.created_at AS posted, users.username AS user FROM posts " +\
+        query = "SELECT posts.id AS id, SUM(IFNULL(post_votes.type, 0)) as net_votes, posts.title AS title, posts.created_at AS posted, users.username AS user FROM posts " +\
             "JOIN users ON posts.user_id = users.id " +\
+            "JOIN post_votes ON posts.id = post_votes.post_id " +\
             "JOIN subreddits ON posts.subreddit_id = subreddits.id " +\
-            "WHERE subreddits.url = :url;"
+            "WHERE subreddits.url = :url " +\
+            "GROUP BY posts.id " +\
+            "ORDER BY net_votes DESC;"
         posts = mysql.query_db(query, data)
+        print posts
         info = check_member(sub)
         ret = render_template('subreddit.html', sub=sub[0], member=member, posts=posts)
         if info:
@@ -190,15 +194,17 @@ def subreddit(suburl):
             ret = render_template('subreddit.html', sub=sub[0], member=member, info=info[0], posts=posts)
     return ret
 
-@app.route('/r/<suburl>/<postid>')
+@app.route('/r/<suburl>/<postid>/')
 def post(suburl, postid):
-    query = "SELECT posts.title AS title, posts.text AS text, users.username AS op, " +\
+    query = "SELECT users.id AS user_id, posts.id AS post_id, posts.title AS title, posts.text AS text, users.username AS op, " +\
             "DATE_FORMAT(posts.created_at, '%h:%i %p - %m/%d/%Y') AS posted, " +\
-            "DATE_FORMAT(posts.updated_at, '%h:%i %p - %m/%d/%Y') AS edited FROM posts " +\
+            "DATE_FORMAT(posts.updated_at, '%h:%i %p - %m/%d/%Y') AS edited, SUM(post_votes.type) AS net_votes FROM posts " +\
             "JOIN users ON posts.user_id = users.id " +\
+            "JOIN post_votes on posts.id = post_votes.post_id " +\
             "WHERE posts.id = :id"
     data = {'id': postid}
     post = mysql.query_db(query, data)
+    print post
     if len(post) > 0:
         data = {'url': 'r/'+suburl}
         query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
@@ -238,6 +244,11 @@ def add_post(suburl):
         # add that to data as sub_id, then insert post with that sub_id
         query = "INSERT INTO posts (text, user_id, subreddit_id, title, created_at, updated_at) " +\
                 "VALUES (:content, :userid, :sub_id, :title, NOW(), NOW());"
+        postid = mysql.query_db(query, data)
+        # give post a default post_votes of zero
+        query = "INSERT INTO post_votes (post_id, user_id, type, created_at, updated_at) " +\
+                "VALUES (:postid, :userid, 0, NOW(), NOW())"
+        data['postid'] = postid
         mysql.query_db(query, data)
     # go back to main page for that subreddit
     url = '/r/' + suburl
@@ -278,6 +289,35 @@ def unsubscribe(suburl):
         mysql.query_db(query, data)
         flash("You successfully unsubscribed!", "Success:Subscription")
         url = '/r/' + suburl
+    return redirect(url)
+
+@app.route('/r/<suburl>/<postid>/<updown>')
+def vote(suburl, postid, updown):
+    if 'id' not in session:
+        return redirect('/')
+    # check if user already voted on this post
+    query = "SELECT user_id FROM post_votes WHERE post_id = :postid and user_id = :userid"
+    data = {
+        'postid': postid,
+        'userid': session['id']
+    }
+    user = mysql.query_db(query, data)
+    # using 1 for upvote, -1 for downvote, to make getting net easy
+    if updown == "upvote":
+        data['vote'] = 1
+    elif updown == "downvote":
+        data['vote'] = -1
+    # if finds nothing, we can insert a vote
+    if len(user) == 0:
+        query = "INSERT INTO post_votes (post_id, user_id, type, created_at, updated_at) " +\
+                "VALUES (:postid, :userid, :vote, NOW(), NOW())"
+        mysql.query_db(query, data)
+    # if vote already exists for this post and user, we need to update
+    else:
+        query = "UPDATE post_votes SET type = :vote WHERE user_id = :userid and post_id = :postid"
+        mysql.query_db(query, data)
+    # redirect to that post
+    url = '/r/' + suburl + '/' + postid
     return redirect(url)
 
 @app.route('/logoff')

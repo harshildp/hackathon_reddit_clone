@@ -20,12 +20,25 @@
 </head>
 
 <body class='container'>
-    {% include "navbar.html" %}        
+    {% include "navbar.html" %}
     <div class='row justify-content-center'>
         <div class='col-md-10'>
-            <h3>{{ post['title'] }}</h3>
-            <h4>Submitted by {{ post['op'] }} at {{ post['posted'] }}</h4>
-            <p>{{ post['text'] }}</p>
+            <div class="card">
+                <div class="card-block">
+                    <h4 class="card-title">{{ post['title'] }}</h4>
+                    <p class="card-text">{{ post['text'] }}</p>
+                </div>
+                <div class="card-block">
+                    <b>Submitted by {{ post['op'] }} at {{ post['posted'] }}</b>
+                </div>
+                <div class="card-block">
+                    <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/upvote" class="card-link"><img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote"></a>
+                    {% if post['net_votes'] >= 0 %}<span class='greenvote'>{% else %}<span class='redvote'>{% endif %}{{ post['net_votes'] }}</span>
+                    <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/downvote" class="card-link"><img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote"></a>
+                    {% if post['user_id'] == session['id'] %}<a href="#" class="card-link">Delete</a>{% endif %}
+                    {% if post['user_id'] == session['id'] %}<a href="#" class="card-link">Edit</a>{% endif %}
+                </div>
+            </div>
         </div>
 
         <div class='col-md-2'>
@@ -34,7 +47,9 @@
             <h4>Community since {{ sub['created'] }}</h4>
             <p>{{ sub['description'] }}</p>
             {% if not member %}
-            <a href="/{{ sub['url'] }}/subscribe"><button type="button" class="btn btn-success">Subscribe</button></a>
+            <a href="/{{ sub['url'] }}/subscribe">
+                <button type="button" class="btn btn-success">Subscribe</button>
+            </a>
             {% else %}
             <h4>Member since {{ info['since'] }}</h4>
             <a href="/{{ sub['url'] }}/unsubscribe">
