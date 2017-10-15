@@ -32,3 +32,27 @@ form#post{
 div#collapseExample{
     margin-bottom: 15px;
 }
+img.vote{
+    width: 1em;
+    height: 1em;
+}
+div.card{
+    padding: 10px;
+}
+div.card-block{
+    margin-bottom: 10px;
+}
+span.greenvote, span.redvote{
+    display: inline-block;
+    width: 2em;
+    text-align: center;
+}
+span.greenvote{
+    color: green;
+}
+span.redvote{
+    color: red;
+}
+h6.votes{
+    margin-top: 1em;
+}
