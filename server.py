@@ -287,3 +287,7 @@ def logout():
 
 
 app.run(debug=True)
+
+
+
+# home becomes dasboard and dashboard becomes direct messages.
