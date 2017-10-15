@@ -343,47 +343,6 @@ def add_comment(suburl, postid):
     url = '/r/' + suburl + '/' + postid
     return redirect(url)
 
-@app.route('/messages/<username>')
-def allMessages(username):
-    query = 'SELECT authors.username AS author,messages.text AS message, DATE_FORMAT(messages.created_at, "%m/%d/%Y") AS time FROM messages JOIN users ON recipient_id = users.id JOIN users AS authors ON author_id = authors.id WHERE recipient_id = :user_id ORDER by messages.created_at DESC'
-    data = {
-        'user_id':session['id']
-    }
-    print data
-    messages = mysql.query_db(query, data)
-    print messages  
-    return render_template('messages.html', messages = messages)
-
-@app.route('/newMessage', methods=['POST'])
-def newMessage():
-    data = {
-        'message': request.form['message'],
-        'username': request.form['username'],
-        'userid': session['id']
-    }
-    print data
-    valid = True
-    if len(data['message']) < 1 or len(data['username']) < 1:
-        flash("Username and Message may not be empty.", "Error:DirectMessage")
-        valid = False
-        return redirect('/messages/'+session['username'])
-    if valid:
-        query = "SELECT id FROM users WHERE users.username = :username"
-        recipient = mysql.query_db(query, data)
-        if len(recipient) < 1:
-            flash('Recipient user doesn\'t exist', 'Error:DirectMessage')
-            return redirect('/messages/'+session['username']) 
-        else: 
-            data['recipient'] = recipient[0]['id']
-            query = 'INSERT INTO messages(text, recipient_id, author_id, created_at, updated_at) VALUES(:message, :recipient, :userid, NOW(), NOW())'
-            mysql.query_db(query, data)
-            return redirect('/messages/'+session['username'])
-
-@app.route('/reply/<recipient>')
-def reply(recipient):
-    session['dm'] = recipient
-    return redirect('/messages/'+session['username'])
-
 @app.route('/logoff')
 def logout():
     session.clear()
@@ -391,3 +350,7 @@ def logout():
 
 
 app.run(debug=True)
+
+
+
+# home becomes dasboard and dashboard becomes direct messages.

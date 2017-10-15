@@ -1,8 +1,8 @@
 <nav class="navbar fixed-top navbar-dark bg-dark">
     <div class='container'>
-        <a class="navbar-brand" href="/home">Reddit</a>
+        <a class="navbar-brand" href="/home"><img id="title" src="../static/img/Clone.png"></a>
         <span class="navbar-text">
-            Welcome to Reddit, {{session['username']}}
+            Welcome, {{session['username']}}
         </span>
         <button class="navbar-toggler toggler-example" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1"
             aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/messages/{{session['username']}}">Messages</a>
+                <a class="nav-link" href="/messages">Messages</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/subscriptions">Subscriptions</a>

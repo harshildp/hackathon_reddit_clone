@@ -21,7 +21,7 @@
 
 <body class='container'>
     {% include "navbar.html" %}
-    <h1>{{session['username']}}'s Subscriptions</h1>
+    <h1>{{session['username']}}'s Subscriptions:</h1>
     <div class='row justify-content-center'>
         <div class='col-md-6'>
             <h3>Current Subcriptions</h3>
@@ -55,7 +55,7 @@
                 </a>
                 {% endfor %} {% endif %}
             </div>
-            <h4>Don't see one for you?
+            <h4 id="white">Don't see one for you?
                 <a href="/subreddits/create">Click here to create a new subreddit</a>
             </h4>
         </div>

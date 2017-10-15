@@ -2,8 +2,24 @@
     margin:0px;
     padding:0px;
 }
+
+nav img {
+  height: 50px;
+  width: auto;
+}
+nav .navbar-text{
+  font-size: 150%;
+}
+
+#white{
+  color: white;
+}
+#white a {
+  color: #353b41;
+}
+
 body.container{
-    background-image: url("../img/the_wall2.jpg");
+    background:linear-gradient(#3650fb, #d0d6f9);
     height:100%;
     background-position: center;
     background-repeat: no-repeat;
@@ -18,7 +34,7 @@ body, html {
     height: 100%;
 }
 body {
-    padding-top: 70px;
+    padding-top: 80px;
 }
 .error{
     color:red;
@@ -31,6 +47,9 @@ form#post{
     }
 div#collapseExample{
     margin-bottom: 15px;
+}
+div.col-md-2 {
+  background: rgba(138, 137, 137, 0.62);
 }
 img.vote{
     width: 1em;
