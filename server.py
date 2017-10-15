@@ -109,10 +109,14 @@ def login():
 
 @app.route('/home')
 def home():
-    query = "SELECT messages.text, users.username as name, date_format(messages.created_at, '%M %D, %Y %r') as time, " +\
-            "messages.id FROM users JOIN messages ON messages.author_id = users.id ORDER BY messages.created_at DESC"
-    messages = mysql.query_db(query)
-    return render_template('home.html', messages=messages)
+    query = "SELECT posts.id AS id, SUM(IFNULL(post_votes.type, 0)) as net_votes, posts.title AS title, posts.created_at AS posted, users.username AS user, subreddits.url AS suburl FROM posts " +\
+            "JOIN users ON posts.user_id = users.id " +\
+            "JOIN post_votes ON posts.id = post_votes.post_id " +\
+            "JOIN subreddits ON posts.subreddit_id = subreddits.id " +\
+            "GROUP BY posts.id " +\
+            "ORDER BY net_votes DESC LIMIT 50;"
+    posts = mysql.query_db(query)
+    return render_template('home.html', posts=posts)
 
 @app.route('/subscriptions')
 def subscriptions():
@@ -184,9 +188,8 @@ def subreddit(suburl):
             "JOIN subreddits ON posts.subreddit_id = subreddits.id " +\
             "WHERE subreddits.url = :url " +\
             "GROUP BY posts.id " +\
-            "ORDER BY net_votes DESC;"
+            "ORDER BY net_votes DESC LIMIT 50;"
         posts = mysql.query_db(query, data)
-        print posts
         info = check_member(sub)
         ret = render_template('subreddit.html', sub=sub[0], member=member, posts=posts)
         if info:
