@@ -72,6 +72,9 @@
             <a href="/{{ sub['url'] }}/subscribe"><button type="button" class="btn btn-success">Subscribe</button></a>
             {% else %}
             <h4>Member since {{ info['since'] }}</h4>
+            <a href="/{{ sub['url'] }}/unsubscribe">
+                <button type="button" class="btn btn-danger">Unsubscribe</button>
+            </a>
             {% endif %}
         </div>
     </div>
