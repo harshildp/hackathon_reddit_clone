@@ -49,10 +49,15 @@
             <div class="list-group">
                 {% if posts %} {% for post in posts %}
                 <a href="/{{ sub['url'] }}/{{ post['id'] }}" class="list-group-item list-group-item-action flex-column align-items-start">
-                    <div class="d-flex w-100 justify-content-between">
+                    <div class="d-flex w-100 justify-content-between inblock">
                         <h5 class="mb-1">{{ post['title'] }}</h5>
                     </div>
                     <small class="text-muted">Submitted {{ post['posted'] }} by {{ post['user'] }}</small>
+                    {% if post['net_votes'] >= 0 %}
+                    <h6 class="votes greenvote"><img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote"> {{ post['net_votes'] }}</h6>
+                    {% else %}
+                    <h6 class="votes redvote"><img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="upvote"> {{ post['net_votes'] }}</h6>
+                    {% endif %}
                 </a>
                 {% endfor %} {% endif %}
             </div>
