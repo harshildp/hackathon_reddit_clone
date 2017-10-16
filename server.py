@@ -276,6 +276,11 @@ def post(suburl, postid):
         x['posted'] = pretty_date(x['posted'])
         
     if len(post) > 0:
+        #check if they are mod
+        query = "SELECT moderator FROM subscriptions JOIN subreddits ON subreddits.id = subscriptions.subreddit_id WHERE user_id = :userid and subreddits.url = :suburl;"
+        data['userid'] = session['id']
+        data['suburl'] = 'r/'+suburl
+        mod = mysql.query_db(query, data)
         query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id,comments.created_at AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
@@ -318,10 +323,10 @@ def post(suburl, postid):
             i['created'] = pretty_date(i['created'])
         info = check_member(sub)
         member = False
-        ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list)
+        ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list, mod=mod[0])
         if info:
             member = True
-            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list, info=info[0])
+            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list, info=info[0], mod=mod[0])
         return ret
     else:
         url = '/r/' + suburl

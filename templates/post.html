@@ -49,12 +49,12 @@
                                 <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/downvote" class="card-link">
                                     <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
                                 </a>
-                                {% if post['user_id'] == session['id'] %}
+                                {% if post['user_id'] == session['id'] or mod['moderator'] == 1 %}
                                 <a href="/delete/{{ sub['url'] }}/{{ post['post_id'] }}" class="card-link">Delete</a>{% endif %} {% if post['user_id'] == session['id'] %}
                                 <a href="/newEdit/{{ sub['url'] }}/{{ post['post_id'] }}" class="card-link">Edit</a>{% endif %}
-                                <a class="card-link" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                {% if member %}<a class="card-link" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
                                     Add new comment
-                                </a>
+                                </a>{% endif %}
                         </div>
                     </div>
                     <div class="collapse" id="collapseExample">
