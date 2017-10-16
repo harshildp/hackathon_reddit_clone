@@ -2,6 +2,7 @@ from flask import Flask, redirect, render_template, session, flash, request
 from mysqlconnection import MySQLConnector
 from collections import OrderedDict
 import md5, re, os, binascii
+from datetime import datetime
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 PASSWORD_REGEX = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$')
 
@@ -21,6 +22,50 @@ def check_member(sub):
             data = {'id': session['id']}
             info = mysql.query_db(query, data)
             return info
+
+def pretty_date(time=False):
+    """
+    Get a datetime object or a int() Epoch timestamp and return a
+    pretty string like 'an hour ago', 'Yesterday', '3 months ago',
+    'just now', etc
+    """
+    
+    now = datetime.now()
+    if type(time) is int:
+        diff = now - datetime.fromtimestamp(time)
+    elif isinstance(time,datetime):
+        diff = now - time
+    elif not time:
+        diff = now - now
+    second_diff = diff.seconds
+    day_diff = diff.days
+
+    if day_diff < 0:
+        return ''
+
+    if day_diff == 0:
+        if second_diff < 10:
+            return "just now"
+        if second_diff < 60:
+            return str(second_diff) + " seconds ago"
+        if second_diff < 120:
+            return "a minute ago"
+        if second_diff < 3600:
+            return str(second_diff / 60) + " minutes ago"
+        if second_diff < 7200:
+            return "an hour ago"
+        if second_diff < 86400:
+            return str(second_diff / 3600) + " hours ago"
+    if day_diff == 1:
+        return "Yesterday"
+    if day_diff < 7:
+        return str(day_diff) + " days ago"
+    if day_diff < 31:
+        return str(day_diff / 7) + " weeks ago"
+    if day_diff < 365:
+        return str(day_diff / 30) + " months ago"
+    return str(day_diff / 365) + " years ago"
+
 def validation():
     error = False
     if len(request.form['email']) < 1:
@@ -112,13 +157,17 @@ def login():
 
 @app.route('/home')
 def home():
-    query = "SELECT posts.id AS id, SUM(IFNULL(post_votes.type, 0)) as net_votes, posts.title AS title, posts.created_at AS posted, users.username AS user, subreddits.url AS suburl FROM posts " +\
+    query = "SELECT posts.id AS id, SUM(IFNULL(post_votes.type, 0)) as net_votes, posts.title AS title, posts.updated_at AS posted, users.username AS user, subreddits.url AS suburl FROM posts " +\
             "JOIN users ON posts.user_id = users.id " +\
             "JOIN post_votes ON posts.id = post_votes.post_id " +\
             "JOIN subreddits ON posts.subreddit_id = subreddits.id " +\
             "GROUP BY posts.id " +\
             "ORDER BY net_votes DESC LIMIT 50;"
     posts = mysql.query_db(query)
+
+    for i in posts:
+        i['posted'] = pretty_date(i['posted'])
+        
     return render_template('home.html', posts=posts)
 
 @app.route('/subscriptions')
@@ -180,10 +229,14 @@ def subreddit(suburl):
     member = False
     ret = redirect('/home')
     data = {'url': 'r/'+suburl}
-    query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
+    query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, subreddits.created_at as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
             "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
     sub = mysql.query_db(query, data)
+
+    for i in sub:
+        i['created'] = pretty_date(i['created'])
+
     if len(sub) > 0:
         query = "SELECT posts.id AS id, SUM(IFNULL(post_votes.type, 0)) as net_votes, posts.title AS title, posts.created_at AS posted, users.username AS user FROM posts " +\
             "JOIN users ON posts.user_id = users.id " +\
@@ -193,6 +246,10 @@ def subreddit(suburl):
             "GROUP BY posts.id " +\
             "ORDER BY net_votes DESC LIMIT 50;"
         posts = mysql.query_db(query, data)
+
+        for i in posts:
+            i['posted'] = pretty_date(i['posted'])
+
         info = check_member(sub)
         ret = render_template('subreddit.html', sub=sub[0], member=member, posts=posts)
         if info:
@@ -203,30 +260,39 @@ def subreddit(suburl):
 @app.route('/r/<suburl>/<postid>/')
 def post(suburl, postid):
     query = "SELECT users.id AS user_id, posts.id AS post_id, posts.title AS title, posts.text AS text, users.username AS op, " +\
-            "DATE_FORMAT(posts.created_at, '%h:%i %p - %m/%d/%Y') AS posted, " +\
-            "DATE_FORMAT(posts.updated_at, '%h:%i %p - %m/%d/%Y') AS edited, SUM(post_votes.type) AS net_votes FROM posts " +\
+            "posts.created_at AS posted, " +\
+            "posts.updated_at AS edited, SUM(post_votes.type) AS net_votes FROM posts " +\
             "JOIN users ON posts.user_id = users.id " +\
             "JOIN post_votes on posts.id = post_votes.post_id " +\
             "WHERE posts.id = :id"
     data = {'id': postid}
     post = mysql.query_db(query, data)
+
+    for x in post:
+        x['edited'] = pretty_date(x['edited'])
+        x['posted'] = pretty_date(x['posted'])
+        
     if len(post) > 0:
-        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
+        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id,comments.created_at AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
                 "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
                 "WHERE comments.post_id = :id and comments.comment_id is NULL " +\
                 "GROUP BY comments.id ORDER BY net_votes DESC"
         comments = mysql.query_db(query, data)
-        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
+        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, comments.created_at AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
                 "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
                 "WHERE comments.post_id = :id and comments.comment_id > 0 " +\
                 "GROUP BY comments.id ORDER BY net_votes DESC"
         replies = mysql.query_db(query, data)
+        for c in comments:
+            c['comment_time'] = pretty_date(c['comment_time'])
+        for r in replies:
+            r['comment_time'] = pretty_date(r['comment_time'])
         data = {'url': 'r/'+suburl}
-        query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
+        query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, subreddits.created_at as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
             "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
         # making comments and replies into nested dictionary with children as dictionaries
@@ -244,7 +310,10 @@ def post(suburl, postid):
                     if response2['comment_on_id'] == response['com_id'] and response2 not in response.values():
                         response[metakey] = response2
                         metakey = metakey + 1
+        print comments
         sub = mysql.query_db(query, data)
+        for i in sub:
+            i['created'] = pretty_date(i['created'])
         info = check_member(sub)
         member = False
         ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list)
@@ -438,13 +507,14 @@ def comment_reply(suburl, postid, commentid):
 
 @app.route('/messages/<username>')
 def allMessages(username):
-    query = 'SELECT authors.username AS author,messages.text AS message, DATE_FORMAT(messages.created_at, "%m/%d/%Y") AS time FROM messages JOIN users ON recipient_id = users.id JOIN users AS authors ON author_id = authors.id WHERE recipient_id = :user_id ORDER by messages.created_at DESC'
+    query = 'SELECT authors.username AS author,messages.text AS message, messages.created_at AS time, messages.id as id FROM messages JOIN users ON recipient_id = users.id JOIN users AS authors ON author_id = authors.id WHERE recipient_id = :user_id ORDER by messages.created_at DESC'
     data = {
         'user_id':session['id']
     }
-    print data
     messages = mysql.query_db(query, data)
-    print messages  
+    for message in messages:
+        message['time'] = pretty_date(message['time'])
+        
     return render_template('messages.html', messages = messages)
 
 @app.route('/newMessage', methods=['POST'])
@@ -454,12 +524,13 @@ def newMessage():
         'username': request.form['username'],
         'userid': session['id']
     }
-    print data
     valid = True
     if len(data['message']) < 1 or len(data['username']) < 1:
         flash("Username and Message may not be empty.", "Error:DirectMessage")
         valid = False
-        return redirect('/messages/'+session['username'])
+    elif data['username'] == session['username']:
+        flash('Why you talking to yourself?','Error:DirectMessage')
+        valid = False
     if valid:
         query = "SELECT id FROM users WHERE users.username = :username"
         recipient = mysql.query_db(query, data)
@@ -471,10 +542,69 @@ def newMessage():
             query = 'INSERT INTO messages(text, recipient_id, author_id, created_at, updated_at) VALUES(:message, :recipient, :userid, NOW(), NOW())'
             mysql.query_db(query, data)
             return redirect('/messages/'+session['username'])
+    else:
+        return redirect('/messages/'+session['username'])
 
 @app.route('/reply/<recipient>')
 def reply(recipient):
     session['dm'] = recipient
+    return redirect('/messages/'+session['username'])
+
+@app.route('/delete/r/<url>/<post_id>')
+def deletePost(url, post_id):
+    queryComSel = 'SELECT comment_votes.comment_id as com_id from comment_votes JOIN comments on comment_votes.comment_id = comments.id WHERE post_id = :post_id'
+    data = {
+        'post_id': post_id
+    }
+    comvotes = mysql.query_db(queryComSel, data)
+    print comvotes
+    if len(comvotes) >= 1:
+        comment_ids = []
+        for i in range(len(comvotes)):
+            comment_ids.append(comvotes[i]['com_id'])
+
+        print comment_ids
+        data = {
+            'comment_id':comment_ids,
+            'post_id': post_id        
+        }
+        print data
+        querycomvotes = 'DELETE FROM comment_votes WHERE comment_id IN :comment_id'
+        mysql.query_db(querycomvotes, data)
+    query = 'DELETE FROM comments WHERE post_id = :post_id'
+    mysql.query_db(query, data)
+    queryVot = 'DELETE FROM post_votes WHERE post_id = :post_id'
+    mysql.query_db(queryVot, data)
+    queryDel =  'DELETE FROM posts WHERE posts.id = :post_id'
+    mysql.query_db(queryDel, data)
+    return redirect('/r/'+url)
+
+@app.route('/newEdit/r/<url>/<post_id>')
+def editPost(url, post_id):
+    query = 'SELECT * FROM posts where posts.id = :post_id'
+    data = {
+        'post_id':post_id
+    }
+    post = mysql.query_db(query,data)
+    return render_template('edit.html', post = post[0], url = url)
+
+@app.route('/edit/r/<url>/<post_id>', methods=['POST'])
+def edit(url, post_id):
+    query = 'UPDATE posts SET title = :title, text = :text, updated_at = NOW()'
+    data = {
+        'title':request.form['title'],
+        'text': request.form['text']
+    }
+    mysql.query_db(query, data)
+    return redirect('/r/'+ url)
+
+@app.route('/deleteMessage/<mes_id>')
+def deleteMessage(mes_id):
+    query = 'DELETE from Messages where messages.id = :id'
+    data = {
+        'id':mes_id
+    }
+    mysql.query_db(query,data)
     return redirect('/messages/'+session['username'])
 
 @app.route('/logoff')
