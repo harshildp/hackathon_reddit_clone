@@ -206,6 +206,9 @@ def create_subreddit():
     if len(data['url']) > 45:
         flash('Your subreddit name must be 43 characters or less.', 'Error:CreateSubError')
         valid = False
+    if ' '  in data['url']:
+        flash("Your subreddit name may not contain spaces.", "Error:CreateSubError")
+        valid = False
     if len(data['desc']) > 255:
         flash('Your subreddit description must be 255 characters or less.', 'Error:CreateSubError')
         valid = False

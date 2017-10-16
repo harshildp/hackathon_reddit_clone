@@ -18,10 +18,10 @@
     <title>Reddit Clone</title>
 </head>
 
-<body class='container'>
+<body>
     {% include "navbar.html" %}
     <div class='row justify-content-center'>
-        <div class='col-md-10'>
+        <div class='col-md-9'>
             <h3>Top Posts</h3>
             <p>
                 <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <div id='col-md-2'>
+        <div class='col-md-3'>
             <h4>{{ sub['url'] }}</h4>
             <h5>{{ sub['num_subs'] }} Subscriber(s) <i class="fa fa-group"></i></h5>
             <h4>Community since {{ sub['created'] }}</h4>
