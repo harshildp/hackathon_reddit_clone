@@ -603,7 +603,7 @@ def edit(url, post_id):
     data = {
         'title':request.form['title'],
         'text': request.form['text'],
-        'post_id':post_id
+        'post_id': post_id
     }
     mysql.query_db(query, data)
     return redirect('/r/'+ url)
