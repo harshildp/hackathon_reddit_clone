@@ -1,5 +1,6 @@
 from flask import Flask, redirect, render_template, session, flash, request
 from mysqlconnection import MySQLConnector
+from collections import OrderedDict
 import md5, re, os, binascii
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 PASSWORD_REGEX = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$')
@@ -209,26 +210,47 @@ def post(suburl, postid):
             "WHERE posts.id = :id"
     data = {'id': postid}
     post = mysql.query_db(query, data)
-    print post
     if len(post) > 0:
         query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
                 "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
-                "WHERE comments.post_id = :id " +\
+                "WHERE comments.post_id = :id and comments.comment_id is NULL " +\
                 "GROUP BY comments.id ORDER BY net_votes DESC"
         comments = mysql.query_db(query, data)
+        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
+                "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
+                "JOIN users ON comments.user_id = users.id " +\
+                "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
+                "WHERE comments.post_id = :id and comments.comment_id > 0 " +\
+                "GROUP BY comments.id ORDER BY net_votes DESC"
+        replies = mysql.query_db(query, data)
         data = {'url': 'r/'+suburl}
         query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
             "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
+        # making comments and replies into nested dictionary with children as dictionaries
+        comment_list = {}
+        key = 0
+        for comment in comments:
+            key = key + 1
+            comment_list[key] = comment
+            for response in replies:
+                metakey = 0
+                if response['comment_on_id'] == comment['com_id']:
+                    comment_list[key][metakey] = response
+                    metakey = metakey + 1
+                for response2 in replies:
+                    if response2['comment_on_id'] == response['com_id'] and response2 not in response.values():
+                        response[metakey] = response2
+                        metakey = metakey + 1
         sub = mysql.query_db(query, data)
         info = check_member(sub)
         member = False
-        ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments)
+        ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list)
         if info:
             member = True
-            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, info=info[0])
+            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, comment_list=comment_list, info=info[0])
         return ret
     else:
         url = '/r/' + suburl
@@ -349,7 +371,6 @@ def add_comment(suburl, postid):
         query = "INSERT INTO comments (text, user_id, post_id, created_at, updated_at) " +\
                 "VALUES (:content, :userid, :postid, NOW(), NOW());"
         comment_id = mysql.query_db(query, data)
-        print comment_id
         # give that comment a default votes of zero
         query = "INSERT INTO comment_votes (user_id, comment_id, type, created_at, updated_at) " +\
                 "VALUES (:userid, :commentid, 0, NOW(), NOW())"
@@ -386,6 +407,33 @@ def comment_vote(suburl, postid, commentid, updown):
         mysql.query_db(query, data)
     # redirect to that post
     url = '/r/' + suburl + '/' + postid
+    return redirect(url)
+
+@app.route('/r/<suburl>/<postid>/<commentid>/reply', methods=['post'])
+def comment_reply(suburl, postid, commentid):
+    # send user back to post if they aren't logged in
+    url = '/r/' + suburl + '/' + postid
+    if 'id' not in session:
+        return redirect(url)
+    data = {
+        'content': request.form['text'],
+        'postid': postid,
+        'commentid': commentid,
+        'userid': session['id']
+    }
+    # verify comment is not empty
+    if len(data['content']) < 1:
+        flash("Comment may not be empty.", "Error:Reply")
+    else:
+        query = "INSERT INTO comments (text, user_id, post_id, created_at, updated_at, comment_id) " +\
+                "VALUES (:content, :userid, :postid, NOW(), NOW(), :commentid);"
+        comment_id = mysql.query_db(query, data)
+        # give that comment a default votes of zero
+        query = "INSERT INTO comment_votes (user_id, comment_id, type, created_at, updated_at) " +\
+                "VALUES (:userid, :commentid, 0, NOW(), NOW())"
+        data['commentid'] = comment_id
+        mysql.query_db(query, data)
+    # go back to main page for that subreddit
     return redirect(url)
 
 @app.route('/messages/<username>')

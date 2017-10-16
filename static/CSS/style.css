@@ -81,3 +81,11 @@ div.card.comment{
     width: 90%;
     float: right;
 }
+li.list-group-item{
+    border: none;
+    margin-left: 0;
+}
+ul.list-group{
+    border: 1px solid black;
+    border-radius: 5px;
+}
