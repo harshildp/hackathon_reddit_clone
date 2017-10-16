@@ -502,15 +502,18 @@ def deletePost(url, post_id):
         'post_id': post_id
     }
     comvotes = mysql.query_db(queryComSel, data)
-    if len(comvotes) > 1:
+    print comvotes
+    if len(comvotes) >= 1:
         comment_ids = []
         for i in range(len(comvotes)):
             comment_ids.append(comvotes[i]['com_id'])
 
+        print comment_ids
         data = {
             'comment_id':comment_ids,
             'post_id': post_id        
         }
+        print data
         querycomvotes = 'DELETE FROM comment_votes WHERE comment_id IN :comment_id'
         mysql.query_db(querycomvotes, data)
     query = 'DELETE FROM comments WHERE post_id = :post_id'
