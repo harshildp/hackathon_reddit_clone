@@ -272,13 +272,17 @@ def post(suburl, postid):
         x['posted'] = pretty_date(x['posted'])
         
     if len(post) > 0:
-        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
+        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id,comments.created_at AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
                 "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
                 "WHERE comments.post_id = :id " +\
                 "GROUP BY comments.id ORDER BY net_votes DESC"
         comments = mysql.query_db(query, data)
+
+        for c in comments:
+            c['comment_time'] = pretty_date(c['comment_time'])
+
         data = {'url': 'r/'+suburl}
         query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, subreddits.created_at as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
@@ -414,7 +418,7 @@ def add_comment(suburl, postid):
         query = "INSERT INTO comments (text, user_id, post_id, created_at, updated_at) " +\
                 "VALUES (:content, :userid, :postid, NOW(), NOW());"
         comment_id = mysql.query_db(query, data)
-        print comment_id
+        comment_id
         # give that comment a default votes of zero
         query = "INSERT INTO comment_votes (user_id, comment_id, type, created_at, updated_at) " +\
                 "VALUES (:userid, :commentid, 0, NOW(), NOW())"
