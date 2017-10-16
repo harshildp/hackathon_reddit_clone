@@ -84,9 +84,9 @@
             {% endfor %} {% endif %}
             </div>
 
-            <div class='col-md-2'>
-                <h3>{{ sub['url'] }}</h3>
-                <h4>{{ sub['num_subs'] }} Subscribers <i class="fa fa-group"></i></h4>
+            <div id='col-md-2'>
+                <h4>{{ sub['url'] }}</h4>
+                <h5>{{ sub['num_subs'] }} Subscriber(s) <i class="fa fa-group"></i></h5>
                 <h4>Community since {{ sub['created'] }}</h4>
                 <p>{{ sub['description'] }}</p>
                 {% if not member %}

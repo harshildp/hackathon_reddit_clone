@@ -29,7 +29,7 @@ body.container{
     background-attachment: fixed;
 }
 
-label, h3, h1{
+label, h4:first-child, h1{
     color:white;
 }
 body, html {
@@ -50,9 +50,23 @@ form#post{
 div#collapseExample{
     margin-bottom: 15px;
 }
-div.col-md-2 {
+div#col-md-2 {
+  /*display: inline-block;*/
+  width: 190px;
+  height: 580px;
+  padding: 20px;
   background: rgba(138, 137, 137, 0.62);
+  text-align:center;
 }
+
+#col-md-2 h4{
+  margin-bottom: 30px;
+}
+
+#col-md-2 h5{
+  margin-bottom: 30px;
+}
+
 img.vote{
     width: 1em;
     height: 1em;
@@ -77,10 +91,7 @@ span.redvote{
 h6.votes{
     margin-top: 1em;
 }
-div.card.comment{
-    width: 90%;
-    float: right;
-}
+
 
 #delete{
     margin-bottom:20px;
