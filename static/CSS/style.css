@@ -15,7 +15,7 @@ nav .navbar-text{
   color: white;
 }
 #white a {
-  color: #353b41;
+  color: red;
 }
 
 body.container{
@@ -101,4 +101,16 @@ h6.votes{
 }
 i.fa-trash-o{
     font-size:20px;
+}
+.col-md-6 h3{
+    color:red;
+}
+.col-md-10 h3{
+    color:red;
+}
+.col-8 h3{
+    color:red;
+}
+#dm{
+    color:red;
 }
