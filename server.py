@@ -476,12 +476,13 @@ def newMessage():
         'username': request.form['username'],
         'userid': session['id']
     }
-    print data
     valid = True
     if len(data['message']) < 1 or len(data['username']) < 1:
         flash("Username and Message may not be empty.", "Error:DirectMessage")
         valid = False
-        return redirect('/messages/'+session['username'])
+    elif data['username'] == session['username']:
+        flash('Why you talking to yourself?','Error:DirectMessage')
+        valid = False
     if valid:
         query = "SELECT id FROM users WHERE users.username = :username"
         recipient = mysql.query_db(query, data)
@@ -493,6 +494,8 @@ def newMessage():
             query = 'INSERT INTO messages(text, recipient_id, author_id, created_at, updated_at) VALUES(:message, :recipient, :userid, NOW(), NOW())'
             mysql.query_db(query, data)
             return redirect('/messages/'+session['username'])
+    else:
+        return redirect('/messages/'+session['username'])
 
 @app.route('/reply/<recipient>')
 def reply(recipient):
