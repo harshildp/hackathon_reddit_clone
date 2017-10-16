@@ -30,8 +30,11 @@
                 <div class="card">
                         <div class="card-block">
                             <h4 class="card-title">{{ post['title'] }}</h4>
-                            <p class="card-text"><img src="{{ post['text'] }}"></p>
+                            {% if '.gif' in post['text'] or '.jpg' in post['text'] or '.png' in post['text'] %}
+                            <p class="card-text"><img src="{{ post['text'] }}" alt=" "></p>
+                            {% else %}
                             <p>{{ post['text'] }}</p>
+                            {% endif %}
                         </div>
                         <div class="card-block">
                             <b>Submitted by {{ post['op'] }} at {{ post['posted'] }}</b>
