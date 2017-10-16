@@ -389,5 +389,4 @@ def logout():
     session.clear()
     return redirect('/')
 
-
 app.run(debug=True)
