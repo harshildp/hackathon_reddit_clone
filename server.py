@@ -9,6 +9,8 @@ mysql = MySQLConnector(app, 'reddit')
 app.secret_key = 'kittens'
 
 def check_member(sub):
+    if 'id' not in session:
+        return None
     info = None
     for char in sub[0]['list_subs']:
         if char == str(session['id']):
@@ -209,6 +211,13 @@ def post(suburl, postid):
     post = mysql.query_db(query, data)
     print post
     if len(post) > 0:
+        query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id, DATE_FORMAT(comments.created_at, '%h:%i %p - %m/%d/%Y') AS comment_time, " +\
+                "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
+                "JOIN users ON comments.user_id = users.id " +\
+                "JOIN comment_votes ON comments.id = comment_votes.comment_id " +\
+                "WHERE comments.post_id = :id " +\
+                "GROUP BY comments.id ORDER BY net_votes DESC"
+        comments = mysql.query_db(query, data)
         data = {'url': 'r/'+suburl}
         query = "SELECT url, COUNT(subscriptions.user_id) as num_subs, date_format(subreddits.created_at, '%m/%d/%Y') as created, description, GROUP_CONCAT(subscriptions.user_id SEPARATOR ', ') as list_subs FROM subreddits " +\
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
@@ -216,10 +225,10 @@ def post(suburl, postid):
         sub = mysql.query_db(query, data)
         info = check_member(sub)
         member = False
-        ret = render_template('post.html', post=post[0], sub=sub[0], member=member)
+        ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments)
         if info:
             member = True
-            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, info=info[0])
+            ret = render_template('post.html', post=post[0], sub=sub[0], member=member, comments=comments, info=info[0])
         return ret
     else:
         url = '/r/' + suburl
@@ -296,8 +305,9 @@ def unsubscribe(suburl):
 
 @app.route('/r/<suburl>/<postid>/<updown>')
 def vote(suburl, postid, updown):
+    url = '/r/' + suburl + '/' + postid
     if 'id' not in session:
-        return redirect('/')
+        return redirect(url)
     # check if user already voted on this post
     query = "SELECT user_id FROM post_votes WHERE post_id = :postid and user_id = :userid"
     data = {
@@ -320,13 +330,13 @@ def vote(suburl, postid, updown):
         query = "UPDATE post_votes SET type = :vote WHERE user_id = :userid and post_id = :postid"
         mysql.query_db(query, data)
     # redirect to that post
-    url = '/r/' + suburl + '/' + postid
     return redirect(url)
 
 @app.route('/r/<suburl>/<postid>/addcomment', methods=['post'])
 def add_comment(suburl, postid):
+    url = '/r/' + suburl + '/' + postid
     if 'id' not in session:
-        return redirect('/')
+        return redirect(url)
     data = {
         'content': request.form['text'],
         'postid': postid,
@@ -338,8 +348,43 @@ def add_comment(suburl, postid):
     else:
         query = "INSERT INTO comments (text, user_id, post_id, created_at, updated_at) " +\
                 "VALUES (:content, :userid, :postid, NOW(), NOW());"
+        comment_id = mysql.query_db(query, data)
+        print comment_id
+        # give that comment a default votes of zero
+        query = "INSERT INTO comment_votes (user_id, comment_id, type, created_at, updated_at) " +\
+                "VALUES (:userid, :commentid, 0, NOW(), NOW())"
+        data['commentid'] = comment_id
         mysql.query_db(query, data)
     # go back to main page for that subreddit
+    return redirect(url)
+
+@app.route('/r/<suburl>/<postid>/<commentid>/<updown>')
+def comment_vote(suburl, postid, commentid, updown):
+    url = '/r/' + suburl + '/' + postid
+    if 'id' not in session:
+        return redirect(url)
+    # check if user already voted on this comment
+    query = "SELECT user_id FROM comment_votes WHERE comment_id = :commentid and user_id = :userid"
+    data = {
+        'commentid': commentid,
+        'userid': session['id']
+    }
+    user = mysql.query_db(query, data)
+    # using 1 for upvote, -1 for downvote, to make getting net easy
+    if updown == "upvote":
+        data['vote'] = 1
+    elif updown == "downvote":
+        data['vote'] = -1
+    # if finds nothing, we can insert a vote
+    if len(user) == 0:
+        query = "INSERT INTO comment_votes (comment_id, user_id, type, created_at, updated_at) " +\
+                "VALUES (:commentid, :userid, :vote, NOW(), NOW())"
+        mysql.query_db(query, data)
+    # if vote already exists for this post and user, we need to update
+    else:
+        query = "UPDATE comment_votes SET type = :vote WHERE user_id = :userid and comment_id = :commentid"
+        mysql.query_db(query, data)
+    # redirect to that post
     url = '/r/' + suburl + '/' + postid
     return redirect(url)
 
