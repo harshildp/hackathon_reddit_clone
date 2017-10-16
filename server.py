@@ -296,21 +296,20 @@ def post(suburl, postid):
             "JOIN subscriptions ON subreddits.id = subscriptions.subreddit_id " +\
             "WHERE url = :url GROUP BY subscriptions.subreddit_id;"
         # making comments and replies into nested dictionary with children as dictionaries
-        comment_list = {}
-        key = 0
-        for comment in comments:
-            key = key + 1
-            comment_list[key] = comment
+        comment_list = []
+        for idx, comment in enumerate(comments):
+            comment_list.append(comment)
             for response in replies:
-                metakey = 0
                 if response['comment_on_id'] == comment['com_id']:
-                    comment_list[key][metakey] = response
-                    metakey = metakey + 1
+                    if 'children' not in comment:
+                        comment['children'] = []
+                    comment['children'].append(response)
                 for response2 in replies:
-                    if response2['comment_on_id'] == response['com_id'] and response2 not in response.values():
-                        response[metakey] = response2
-                        metakey = metakey + 1
-        print comments
+                    if response2['comment_on_id'] == response['com_id']:
+                        if 'children' not in response:
+                            response['children'] = []
+                        if response2 not in response['children']:
+                            response['children'].append(response2)
         sub = mysql.query_db(query, data)
         for i in sub:
             i['created'] = pretty_date(i['created'])
@@ -579,7 +578,7 @@ def deletePost(url, post_id):
     mysql.query_db(queryDel, data)
     return redirect('/r/'+url)
 
-@app.route('/newEdit/r/<url>/<post_id>')
+@app.route('/newEdit/r/<url>/<post_id>/')
 def editPost(url, post_id):
     query = 'SELECT * FROM posts where posts.id = :post_id'
     data = {
