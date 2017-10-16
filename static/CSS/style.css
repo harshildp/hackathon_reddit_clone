@@ -32,6 +32,9 @@ body.container{
 label, h4:first-child, h1{
     color:white;
 }
+h4.card-title{
+    color: black;
+}
 body, html {
     height: 100%;
 }
@@ -92,7 +95,14 @@ h6.votes{
     margin-top: 1em;
 }
 
-
+li.list-group-item{
+    border: none;
+    margin-left: 0;
+}
+ul.list-group{
+    border: 1px solid black;
+    border-radius: 5px;
+}
 #delete{
     margin-bottom:20px;
 }
@@ -113,4 +123,7 @@ i.fa-trash-o{
 }
 #dm{
     color:red;
+}
+h6.commentnest{
+    margin: 10px 0 10px 0;
 }

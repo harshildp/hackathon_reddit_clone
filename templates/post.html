@@ -16,76 +16,96 @@
         crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Reddit Clone</title>
+    <style>
+        ul > li {
+    margin-left: 10px;
+}
+    </style>
 </head>
 
 <body class='container'>
     {% include "navbar.html" %}
     <div class='row justify-content-center'>
         <div class='col-md-10'>
-            <div class="card">
-                <div class="card-block">
-                    <h4 class="card-title">{{ post['title'] }}</h4>
-                    <p class="card-text">{{ post['text'] }}</p>
-                </div>
-                <div class="card-block">
-                    <b>Submitted {{ post['edited'] }} by {{ post['op'] }} </b>
-                </div>
-                <div class="card-block">
-                    <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/upvote" class="card-link">
-                        <img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote">
-                    </a>
-                    {% if post['net_votes'] >= 0 %}
-                    <span class='greenvote'>{% else %}
-                        <span class='redvote'>{% endif %}{{ post['net_votes'] }}</span>
-                        <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/downvote" class="card-link">
-                            <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
-                        </a>
-                        {% if post['user_id'] == session['id'] %}
-                        <a href="/delete/{{sub['url']}}/{{post['post_id']}}" class="card-link">Delete</a>{% endif %} {% if post['user_id'] == session['id'] %}
-                        <a href="/newEdit/{{sub['url']}}/{{post['post_id']}}" class="card-link">Edit</a>{% endif %}
-                        <a class="card-link" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                            Add new comment
-                        </a>
-                </div>
-            </div>
-            <div class="collapse" id="collapseExample">
-                <div class="card card-block">
-                    <form action="/{{ sub['url'] }}/{{ post['post_id'] }}/addcomment" method='POST' id="post">
-                        <div class='form-group'>
-                            {% with errors = get_flashed_messages(category_filter=["Error:Comment"]) %} {% include "error.html" %} {% endwith %}
-                            <label for="text">Comment:</label>
-                            <textarea name="text" class="form-control"></textarea>
+                <div class="card">
+                        <div class="card-block">
+                            <h4 class="card-title">{{ post['title'] }}</h4>
+                            <p class="card-text">{{ post['text'] }}</p>
                         </div>
-                        <Button type="submit" class="btn btn-primary">Submit Comment</Button>
-                    </form>
-                </div>
-            </div>
-            {% if comments %} {% for comment in comments %}
-            <div class="card comment">
-                <div class="card-block">
-                    <b>Comment {{ comment['comment_time'] }} by {{ comment['commenter'] }}</b>
-                </div>
-                <div class="card-block">
-                    {{ comment['content'] }}
-                </div>
-                <div class="card-block">
-                    <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/upvote" class="card-link">
-                        <img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote">
-                    </a>
-                    {% if comment['net_votes'] >= 0 %}
-                    <span class='greenvote'>{% else %}
-                        <span class='redvote'>{% endif %}{{ comment['net_votes'] }}</span>
-                        <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/downvote" class="card-link">
-                            <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
-                        </a>
-                        <a href="#" class="card-link">Reply</a>
-                </div>
-            </div>
-            {% endfor %} {% endif %}
-            </div>
+                        <div class="card-block">
+                            <b>Submitted by {{ post['op'] }} at {{ post['posted'] }}</b>
+                        </div>
+                        <div class="card-block">
+                            <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/upvote" class="card-link">
+                                <img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote">
+                            </a>
+                            {% if post['net_votes'] >= 0 %}
+                            <span class='greenvote'>{% else %}
+                                <span class='redvote'>{% endif %}{{ post['net_votes'] }}</span>
+                                <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/downvote" class="card-link">
+                                    <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
+                                </a>
+                                {% if post['user_id'] == session['id'] %}
+                                <a href="/delete/{{ sub['url'] }}/{{ post['post_id'] }}" class="card-link">Delete</a>{% endif %} {% if post['user_id'] == session['id'] %}
+                                <a href="/newEdit/{{ sub['url'] }}/{{ post['post_id'] }}" class="card-link">Edit</a>{% endif %}
+                                <a class="card-link" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                    Add new comment
+                                </a>
+                        </div>
+                    </div>
+                    <div class="collapse" id="collapseExample">
+                        <div class="card card-block">
+                            <form action="/{{ sub['url'] }}/{{ post['post_id'] }}/addcomment" method='POST' id="post">
+                                <div class='form-group'>
+                                    {% with errors = get_flashed_messages(category_filter=["Error:Comment"]) %} {% include "error.html" %} {% endwith %}
+                                    <label for="text">Comment:</label>
+                                    <textarea name="text" class="form-control"></textarea>
+                                </div>
+                                <Button type="submit" class="btn btn-primary">Submit Comment</Button>
+                            </form>
+                        </div>
+                    </div>
+            {% for comment in comment_list recursive %}
+            <li class="list-group-item">
+            <p>{{ comment['content'] }}</p>
+            <small class="text-muted">Submitted {{ comment['comment_time'] }} by {{ comment['commenter'] }}</small>
+            
+           <h6 class="commentnest">
+           <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/upvote" class="card-link">
+               <img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote">
+           </a>
+           {% if comment['net_votes'] >= 0 %}
+           <span class='greenvote'>{{ comment['net_votes'] }}</span>
+           {% else %}
+           <span class='redvote'>{{ comment['net_votes'] }}</span>
+           {% endif %}
+           <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/downvote" class="card-link">
+               <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
+           </a>
+           {% set replylink = 'collapse' ~ comment['com_id'] %}
+           <a class="card-link" data-toggle="collapse" href="#{{replylink}}" aria-expanded="false" aria-controls="{{replylink}}">
+               Reply
+           </a>
+           <div class="collapse" id="{{replylink}}">
+               <form action="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/reply" method='POST'>
+                   <div class='form-group'>
+                       {% with errors = get_flashed_messages(category_filter=["Error:Reply"]) %} {% include "error.html" %} {% endwith %}
+                       <textarea name="text" class="form-control"></textarea>
+                   </div>
+                   <Button type="submit" class="btn btn-primary">Post Reply</Button>
+               </form>
+           </div>
+        </h6>
+            {% if comment.children %}
+                <ul class="list-group">{{ loop(comment.children) }}</ul>                 
+            {% endif %}
+        </li>
+        {% endfor %}
+    
+        </div>
 
             <div id='col-md-2'>
-                <h4>{{ sub['url'] }}</h4>
+                <h4><a href="/{{ sub['url'] }}">{{ sub['url'] }}</a></h4>
                 <h5>{{ sub['num_subs'] }} Subscriber(s) <i class="fa fa-group"></i></h5>
                 <h4>Community since {{ sub['created'] }}</h4>
                 <p>{{ sub['description'] }}</p>
