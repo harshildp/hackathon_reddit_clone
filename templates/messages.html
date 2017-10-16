@@ -27,15 +27,18 @@
             </form>   
         </div>
         {% if messages %}
-        <h1>{{session['username']}}'s Direct Messages</h1>        
-        <ul class='list-group'>
+        <h3>{{session['username']}}'s Direct Messages</h3> 
+        <div class='row justify-content-center'>              
+        <ul class='list-group col-10'>
         {% for message in messages %}
             <li class='list-group-item'>
                 <a href='/reply/{{message.author}}'>{{message.author}}</a>
-                <small class="text-muted">{{message.time}}</small>
+                <small class="text-muted"> &#8943; Received {{message.time}}</small>
                 <p>{{message.message}}</p>
             </li>
         {% endfor %}
+        </ul>
         {% endif %}
+        </div>
 </body>
 </html>
