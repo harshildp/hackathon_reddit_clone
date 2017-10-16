@@ -43,7 +43,7 @@
                         <a href="/delete/{{sub['url']}}/{{post['post_id']}}" class="card-link">Delete</a>{% endif %} {% if post['user_id'] == session['id'] %}
                         <a href="/newEdit/{{sub['url']}}/{{post['post_id']}}" class="card-link">Edit</a>{% endif %}
                         <a class="card-link" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                                Add new comment
+                            Add new comment
                         </a>
                 </div>
             </div>
@@ -59,24 +59,46 @@
                     </form>
                 </div>
             </div>
-        </div>
+            {% if comments %} {% for comment in comments %}
+            <div class="card comment">
+                <div class="card-block">
+                    <b>Comment by {{ comment['commenter'] }} at {{ comment['comment_time'] }}</b>
+                </div>
+                <div class="card-block">
+                    {{ comment['content'] }}
+                </div>
+                <div class="card-block">
+                    <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/upvote" class="card-link">
+                        <img class="vote" src="{{ url_for('static', filename='img/upvote.png')}}" alt="upvote">
+                    </a>
+                    {% if comment['net_votes'] >= 0 %}
+                    <span class='greenvote'>{% else %}
+                        <span class='redvote'>{% endif %}{{ comment['net_votes'] }}</span>
+                        <a href="/{{ sub['url'] }}/{{ post['post_id'] }}/{{ comment['com_id'] }}/downvote" class="card-link">
+                            <img class="vote" src="{{ url_for('static', filename='img/downvote.png')}}" alt="downvote">
+                        </a>
+                        <a href="#" class="card-link">Reply</a>
+                </div>
+            </div>
+            {% endfor %} {% endif %}
+            </div>
 
-        <div class='col-md-2'>
-            <h3>{{ sub['url'] }}</h3>
-            <h4>{{ sub['num_subs'] }} Subscribers</h4>
-            <h4>Community since {{ sub['created'] }}</h4>
-            <p>{{ sub['description'] }}</p>
-            {% if not member %}
-            <a href="/{{ sub['url'] }}/subscribe">
-                <button type="button" class="btn btn-success">Subscribe</button>
-            </a>
-            {% else %}
-            <h4>Member since {{ info['since'] }}</h4>
-            <a href="/{{ sub['url'] }}/unsubscribe">
-                <button type="button" class="btn btn-danger">Unsubscribe</button>
-            </a>
-            {% endif %}
-        </div>
+            <div class='col-md-2'>
+                <h3>{{ sub['url'] }}</h3>
+                <h4>{{ sub['num_subs'] }} Subscribers</h4>
+                <h4>Community since {{ sub['created'] }}</h4>
+                <p>{{ sub['description'] }}</p>
+                {% if not member %}
+                <a href="/{{ sub['url'] }}/subscribe">
+                    <button type="button" class="btn btn-success">Subscribe</button>
+                </a>
+                {% else %}
+                <h4>Member since {{ info['since'] }}</h4>
+                <a href="/{{ sub['url'] }}/unsubscribe">
+                    <button type="button" class="btn btn-danger">Unsubscribe</button>
+                </a>
+                {% endif %}
+            </div>
     </div>
 </body>
 
