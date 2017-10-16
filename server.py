@@ -281,6 +281,8 @@ def post(suburl, postid):
         data['userid'] = session['id']
         data['suburl'] = 'r/'+suburl
         mod = mysql.query_db(query, data)
+        if len(mod) == 0:
+            mod = [{'moderator': 0}]
         query = "SELECT users.username AS commenter, comments.text AS content, comments.id AS com_id,comments.created_at AS comment_time, " +\
                 "comments.comment_id AS comment_on_id, SUM(IFNULL(comment_votes.type, 0)) AS net_votes FROM comments " +\
                 "JOIN users ON comments.user_id = users.id " +\
