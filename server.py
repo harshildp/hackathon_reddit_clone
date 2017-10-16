@@ -459,7 +459,7 @@ def comment_vote(suburl, postid, commentid, updown):
 
 @app.route('/messages/<username>')
 def allMessages(username):
-    query = 'SELECT authors.username AS author,messages.text AS message, messages.created_at AS time FROM messages JOIN users ON recipient_id = users.id JOIN users AS authors ON author_id = authors.id WHERE recipient_id = :user_id ORDER by messages.created_at DESC'
+    query = 'SELECT authors.username AS author,messages.text AS message, messages.created_at AS time, messages.id as id FROM messages JOIN users ON recipient_id = users.id JOIN users AS authors ON author_id = authors.id WHERE recipient_id = :user_id ORDER by messages.created_at DESC'
     data = {
         'user_id':session['id']
     }
@@ -546,6 +546,15 @@ def edit(url, post_id):
     }
     mysql.query_db(query, data)
     return redirect('/r/'+ url)
+
+@app.route('/deleteMessage/<mes_id>')
+def deleteMessage(mes_id):
+    query = 'DELETE from Messages where messages.id = :id'
+    data = {
+        'id':mes_id
+    }
+    mysql.query_db(query,data)
+    return redirect('/messages/'+session['username'])
 
 @app.route('/logoff')
 def logout():

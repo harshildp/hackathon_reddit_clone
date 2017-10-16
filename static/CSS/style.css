@@ -81,3 +81,13 @@ div.card.comment{
     width: 90%;
     float: right;
 }
+
+#delete{
+    margin-bottom:20px;
+}
+.delete{
+    display:none;
+}
+i.fa-trash-o{
+    font-size:20px;
+}

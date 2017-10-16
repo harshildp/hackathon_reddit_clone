@@ -14,6 +14,9 @@
         crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
         crossorigin="anonymous"></script>
+    <script type="text/javascript" src="{{ url_for('static',filename='JS/messages.js') }}"></script>   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
     <title>Messages</title>
 </head>
 
@@ -31,14 +34,16 @@
         </form>
     </div>
     {% if messages %}
-    <h3>{{session['username']}}'s Direct Messages</h3>
+    <h3>{{session['username']}}'s Direct Messages </h3>
+    <button type='delete' class='btn btn-danger' id='delete'>Delete Comment</button>    
     <div class='row justify-content-center'>
         <ul class='list-group col-10'>
             {% for message in messages %}
             <li class='list-group-item'>
                 <a href='/reply/{{message.author}}'>{{message.author}}</a>
-                <small class="text-muted"> &#8943; Received {{message.time}}</small>
+                <small class="text-muted"><i class="fa fa-send-o"></i> &#8943; Received {{message.time}}</small>
                 <p>{{message.message}}</p>
+                <small class="text-muted delete"><a href='/deleteMessage/{{message["id"]}}'><i class="fa fa-trash-o"></i></small>
             </li>
             {% endfor %}
         </ul>
