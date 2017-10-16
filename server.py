@@ -599,10 +599,11 @@ def editPost(url, post_id):
 
 @app.route('/edit/r/<url>/<post_id>', methods=['POST'])
 def edit(url, post_id):
-    query = 'UPDATE posts SET title = :title, text = :text, updated_at = NOW()'
+    query = 'UPDATE posts SET title = :title, text = :text, updated_at = NOW() WHERE posts.id = :post_id'
     data = {
         'title':request.form['title'],
-        'text': request.form['text']
+        'text': request.form['text'],
+        'post_id': post_id
     }
     mysql.query_db(query, data)
     return redirect('/r/'+ url)
